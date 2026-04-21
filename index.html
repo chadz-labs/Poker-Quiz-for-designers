@@ -824,7 +824,23 @@
       <div class="end-actions">
         <button class="end-btn primary" id="copyBtn">📋 Copy my result</button>
         <button class="end-btn" id="retakeBtn">↻ Run it back</button>
+        <button class="end-btn" id="exportBtn" style="display: none;">⬇ Export JSON</button>
+        <button class="end-btn" id="recoverBtn" style="display: none;">⟲ Pull from this device</button>
+        <button class="end-btn" id="importBtn" style="display: none;">⇪ Import pasted JSON</button>
         <button class="end-btn danger-ghost" id="clearBtn" style="display: none;">Clear leaderboard</button>
+      </div>
+
+      <div id="adminImportPanel" style="display: none; margin-top: 28px; padding: 18px; border: 1px dashed var(--text-faint); border-radius: 10px;">
+        <div style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;">
+          Admin · Recover participant data
+        </div>
+        <div style="font-family: var(--serif); font-size: 13px; color: var(--text-faint); margin-bottom: 14px; line-height: 1.55;">
+          Each participant's score is also cached in their own browser. Ask them to open DevTools (F12) → Console tab, paste
+          <code style="font-family: var(--mono); background: var(--panel); padding: 2px 6px; border-radius: 4px; color: var(--text-dim);">copy(localStorage.getItem('pokerQuizLeaderboard_v1'))</code>,
+          and send you the result. Paste one participant's JSON at a time (array or single entry) and click Import. You can repeat. Duplicates are deduped automatically.
+        </div>
+        <textarea id="importTextarea" placeholder='Paste JSON here — e.g. [{"name":"Alice","score":22,...}]' style="width: 100%; min-height: 120px; font-family: var(--mono); font-size: 12px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); resize: vertical;"></textarea>
+        <div id="importStatus" style="margin-top: 10px; font-family: var(--mono); font-size: 11px; color: var(--text-dim); min-height: 16px; letter-spacing: 0.08em;"></div>
       </div>
     </div>
   </main>
@@ -1047,6 +1063,8 @@ const els = {
   brHard: $('brHard'), brHardPts: $('brHardPts'),
   lbTable: $('lbTable'),
   copyBtn: $('copyBtn'), retakeBtn: $('retakeBtn'), clearBtn: $('clearBtn'),
+  exportBtn: $('exportBtn'), recoverBtn: $('recoverBtn'), importBtn: $('importBtn'),
+  adminImportPanel: $('adminImportPanel'), importTextarea: $('importTextarea'), importStatus: $('importStatus'),
   toast: $('toast')
 };
 
@@ -1073,30 +1091,69 @@ async function loadLeaderboard() {
   }
 }
 
-async function saveToLeaderboard(entry) {
-  if (BACKEND_URL) {
-    try {
-      // 1. Fetch current scores
-      let currentScores = await loadLeaderboard();
-      // 2. Append the new score
-      currentScores.push(entry);
-      // 3. Update the global database
-      await fetch(BACKEND_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: "poker_quiz_leaderboard", data: { scores: currentScores } })
-      });
-    } catch (e) {
-      console.error("Failed to save to global leaderboard", e);
-    }
+/* Stable id per entry so concurrent writers can merge without clobbering. */
+function entryId(e) {
+  if (e && e.id) return e.id;
+  // Fallback for legacy entries that predate the id field.
+  return `legacy:${e.name || ''}|${e.completedAt || ''}|${e.score ?? ''}`;
+}
+
+function mergeEntries(a, b) {
+  const out = new Map();
+  for (const e of [...(a || []), ...(b || [])]) {
+    if (!e || typeof e !== 'object') continue;
+    const id = entryId(e);
+    if (!out.has(id)) out.set(id, e);
   }
-  // Always save locally as a backup
+  return Array.from(out.values());
+}
+
+function newEntryId() {
+  return 'e_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+}
+
+async function putScores(scores) {
+  const res = await fetch(BACKEND_URL, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: "poker_quiz_leaderboard", data: { scores } })
+  });
+  if (!res.ok) throw new Error('PUT failed: ' + res.status);
+}
+
+/* Read-merge-write with verify-retry. restful-api.dev has no CAS, so we
+   mitigate the race by re-fetching after writing and retrying with jitter
+   if our entry isn't there (meaning another writer overwrote us). */
+async function saveToLeaderboard(entry) {
+  if (!entry.id) entry.id = newEntryId();
+
+  // Local backup first — never lose the entry even if the network fails.
   try {
     const raw = localStorage.getItem(LB_KEY);
     const allLocal = raw ? JSON.parse(raw) : [];
-    allLocal.push(entry);
-    localStorage.setItem(LB_KEY, JSON.stringify(allLocal));
+    localStorage.setItem(LB_KEY, JSON.stringify(mergeEntries(allLocal, [entry])));
   } catch (e) {}
+
+  if (!BACKEND_URL) return;
+
+  const MAX_ATTEMPTS = 6;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const current = await loadLeaderboard();
+      const merged = mergeEntries(current, [entry]);
+      await putScores(merged);
+
+      // Verify: re-fetch and confirm our id survived the PUT.
+      const verify = await loadLeaderboard();
+      if (verify.some(e => entryId(e) === entryId(entry))) return;
+    } catch (e) {
+      console.error(`Save attempt ${attempt} failed`, e);
+    }
+    // Jittered backoff — spread retries so concurrent writers don't collide.
+    const delay = Math.floor(200 * Math.pow(1.6, attempt - 1) + Math.random() * 400);
+    await new Promise(r => setTimeout(r, delay));
+  }
+  console.error("Gave up saving to global leaderboard after retries. Entry is still in localStorage.");
 }
 
 function clearLeaderboard() {
@@ -1228,6 +1285,7 @@ function nextQuestion() {
 /* ============ END SCREEN ============ */
 async function finishQuiz() {
   const entry = {
+    id: newEntryId(),
     name: state.playerName,
     score: state.score,
     max: MAX_POSSIBLE,
@@ -1274,11 +1332,15 @@ function renderEnd(entry) {
   els.brHard.textContent = `${b[3].got}/${b[3].max}`;
   els.brHardPts.textContent = `${b[3].got * 3} pts`;
 
-  const isAdmin = state.playerName.toLowerCase() === "admin";
+  const isAdmin = state.playerName.trim().toLowerCase() === "admin";
 
-  // Only show leaderboard section and clear button if user is Admin
+  // Only show leaderboard section and admin tools if user is Admin
   document.getElementById('lbSection').style.display = isAdmin ? "block" : "none";
   els.clearBtn.style.display = isAdmin ? "inline-flex" : "none";
+  els.exportBtn.style.display = isAdmin ? "inline-flex" : "none";
+  els.recoverBtn.style.display = isAdmin ? "inline-flex" : "none";
+  els.importBtn.style.display = isAdmin ? "inline-flex" : "none";
+  els.adminImportPanel.style.display = isAdmin ? "block" : "none";
 
   if (isAdmin) renderLeaderboard(entry);
 }
@@ -1393,6 +1455,84 @@ els.retakeBtn.addEventListener('click', () => {
   els.startBtn.disabled = false;
   els.nameInput.focus();
   els.nameInput.select();
+});
+
+function parsePastedEntries(raw) {
+  if (!raw || !raw.trim()) return [];
+  let txt = raw.trim();
+  // Some users paste a double-quoted JSON string (as copy() sometimes yields). Unwrap it.
+  if (txt.startsWith('"') && txt.endsWith('"')) {
+    try { txt = JSON.parse(txt); } catch (_) {}
+  }
+  let data;
+  try { data = (typeof txt === 'string') ? JSON.parse(txt) : txt; }
+  catch (e) { throw new Error('Invalid JSON: ' + e.message); }
+  const arr = Array.isArray(data) ? data : [data];
+  return arr.filter(e => e && typeof e === 'object' && typeof e.name === 'string' && typeof e.score === 'number');
+}
+
+els.exportBtn.addEventListener('click', async () => {
+  const all = await loadLeaderboard();
+  const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `poker-quiz-leaderboard-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`Exported ${all.length} entries`);
+});
+
+els.recoverBtn.addEventListener('click', async () => {
+  let local = [];
+  try {
+    const raw = localStorage.getItem(LB_KEY);
+    local = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(local)) local = [];
+  } catch (e) { local = []; }
+  if (!local.length) {
+    showToast('No entries in this browser\'s localStorage');
+    return;
+  }
+  els.importStatus.textContent = `Merging ${local.length} local entries into global leaderboard…`;
+  try {
+    const current = await loadLeaderboard();
+    const merged = mergeEntries(current, local);
+    const added = merged.length - current.length;
+    await putScores(merged);
+    els.importStatus.textContent = `✓ Added ${added} new entries (${local.length - added} were already present). Total: ${merged.length}.`;
+    renderLeaderboard({ completedAt: '' });
+  } catch (e) {
+    els.importStatus.textContent = '✗ Failed: ' + e.message;
+  }
+});
+
+els.importBtn.addEventListener('click', async () => {
+  let entries;
+  try {
+    entries = parsePastedEntries(els.importTextarea.value);
+  } catch (e) {
+    els.importStatus.textContent = '✗ ' + e.message;
+    return;
+  }
+  if (!entries.length) {
+    els.importStatus.textContent = '✗ No valid entries found in the pasted JSON.';
+    return;
+  }
+  els.importStatus.textContent = `Merging ${entries.length} pasted entries into global leaderboard…`;
+  try {
+    const current = await loadLeaderboard();
+    const merged = mergeEntries(current, entries);
+    const added = merged.length - current.length;
+    await putScores(merged);
+    els.importTextarea.value = '';
+    els.importStatus.textContent = `✓ Added ${added} new entries (${entries.length - added} were already present). Total on global leaderboard: ${merged.length}.`;
+    renderLeaderboard({ completedAt: '' });
+  } catch (e) {
+    els.importStatus.textContent = '✗ Failed: ' + e.message;
+  }
 });
 
 els.clearBtn.addEventListener('click', async () => {
