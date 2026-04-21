@@ -813,7 +813,7 @@
         </div>
       </div>
 
-      <div class="lb-section">
+      <div class="lb-section" id="lbSection" style="display: none;">
         <div class="lb-heading">
           <h2 class="lb-title">The <em>Leaderboard</em></h2>
           <span class="lb-sub">Top scores on this browser</span>
@@ -1274,10 +1274,13 @@ function renderEnd(entry) {
   els.brHard.textContent = `${b[3].got}/${b[3].max}`;
   els.brHardPts.textContent = `${b[3].got * 3} pts`;
 
-  // Only show the clear button if user is Admin
-  els.clearBtn.style.display = (state.playerName.toLowerCase() === "admin") ? "inline-flex" : "none";
+  const isAdmin = state.playerName.toLowerCase() === "admin";
 
-  renderLeaderboard(entry);
+  // Only show leaderboard section and clear button if user is Admin
+  document.getElementById('lbSection').style.display = isAdmin ? "block" : "none";
+  els.clearBtn.style.display = isAdmin ? "inline-flex" : "none";
+
+  if (isAdmin) renderLeaderboard(entry);
 }
 
 function verdictLabel(pct) {

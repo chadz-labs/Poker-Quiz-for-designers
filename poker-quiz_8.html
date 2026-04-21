@@ -813,10 +813,10 @@
         </div>
       </div>
 
-      <div class="lb-section">
-        <div class="lb-heading">
+      <div class="lb-section" id="lbSection">
+        <div class="lb-heading" id="lbHeading">
           <h2 class="lb-title">The <em>Leaderboard</em></h2>
-          <span class="lb-sub">Top scores on this browser</span>
+          <span class="lb-sub" id="lbSub">Global scores</span>
         </div>
         <div class="lb-table" id="lbTable"></div>
       </div>
@@ -1274,10 +1274,31 @@ function renderEnd(entry) {
   els.brHard.textContent = `${b[3].got}/${b[3].max}`;
   els.brHardPts.textContent = `${b[3].got * 3} pts`;
 
-  // Only show the clear button if user is Admin
-  els.clearBtn.style.display = (state.playerName.toLowerCase() === "admin") ? "inline-flex" : "none";
+  const isAdmin = state.playerName.trim().toLowerCase() === "admin";
 
-  renderLeaderboard(entry);
+  // Only show the clear button if user is Admin
+  els.clearBtn.style.display = isAdmin ? "inline-flex" : "none";
+
+  // Only show the global leaderboard to Admin
+  if (isAdmin) {
+    document.getElementById('lbSection').style.display = '';
+    document.getElementById('lbSub').textContent = 'Global scores — Admin view';
+    renderLeaderboard(entry);
+  } else {
+    document.getElementById('lbSection').style.display = 'block';
+    document.getElementById('lbSub').textContent = 'Restricted';
+    document.getElementById('lbTable').innerHTML = `
+      <div class="lb-empty" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:36px 20px;">
+        <span style="font-size:28px;">🔒</span>
+        <span style="font-family:var(--mono);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-faint);">
+          Scores are kept private
+        </span>
+        <span style="font-family:var(--serif);font-style:italic;font-size:13px;color:var(--text-faint);max-width:320px;text-align:center;line-height:1.5;">
+          Only the host can view the full leaderboard.
+        </span>
+      </div>
+    `;
+  }
 }
 
 function verdictLabel(pct) {
