@@ -1274,6 +1274,9 @@ function renderEnd(entry) {
   els.brHard.textContent = `${b[3].got}/${b[3].max}`;
   els.brHardPts.textContent = `${b[3].got * 3} pts`;
 
+  // Only show the clear button if user is Admin
+  els.clearBtn.style.display = (state.playerName.toLowerCase() === "admin") ? "inline-flex" : "none";
+
   renderLeaderboard(entry);
 }
 
@@ -1389,14 +1392,22 @@ els.retakeBtn.addEventListener('click', () => {
   els.nameInput.select();
 });
 
-els.clearBtn.addEventListener('click', () => {
-  if (BACKEND_URL) {
-    alert("Global leaderboard cannot be cleared from the frontend.");
-    return;
-  }
-  if (confirm('Clear the local leaderboard on this browser? This cannot be undone.')) {
-    clearLeaderboard();
-    els.lbTable.innerHTML = `<div class="lb-empty">Leaderboard cleared.</div>`;
+els.clearBtn.addEventListener('click', async () => {
+  if (confirm('Wipe the entire global leaderboard for everyone? This cannot be undone.')) {
+    els.lbTable.innerHTML = `<div class="lb-empty">Wiping leaderboard...</div>`;
+    try {
+      if (BACKEND_URL) {
+        await fetch(BACKEND_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: "poker_quiz_leaderboard", data: { scores: [] } })
+        });
+      }
+      clearLeaderboard();
+      els.lbTable.innerHTML = `<div class="lb-empty">Leaderboard cleared. Refresh the page to start over.</div>`;
+    } catch (e) {
+      alert("Failed to clear global leaderboard.");
+    }
   }
 });
 
