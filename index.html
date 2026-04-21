@@ -1017,6 +1017,7 @@ const QUESTIONS = [
 const POINTS = { 1: 1, 2: 2, 3: 3 };
 const MAX_POSSIBLE = QUESTIONS.reduce((s, q) => s + POINTS[q.difficulty], 0);
 const LB_KEY = "pokerQuizLeaderboard_v1";
+const BACKEND_URL = ""; // PASTE YOUR GOOGLE SCRIPT WEB APP URL HERE
 
 const state = {
   playerName: "",
@@ -1052,20 +1053,45 @@ const els = {
 const pad = (n) => String(n).padStart(2, '0');
 
 /* ============ LEADERBOARD STORAGE ============ */
-function loadLeaderboard() {
-  try {
-    const raw = localStorage.getItem(LB_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) { return []; }
+async function loadLeaderboard() {
+  if (BACKEND_URL) {
+    try {
+      const res = await fetch(BACKEND_URL);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.error("Failed to fetch global leaderboard", e);
+      return [];
+    }
+  } else {
+    try {
+      const raw = localStorage.getItem(LB_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) { return []; }
+  }
 }
-function saveToLeaderboard(entry) {
-  const all = loadLeaderboard();
-  all.push(entry);
-  try { localStorage.setItem(LB_KEY, JSON.stringify(all)); } catch (e) {}
-  return all;
+
+async function saveToLeaderboard(entry) {
+  if (BACKEND_URL) {
+    try {
+      // POST to Google Sheets (uses no-cors to avoid preflight issues simple scripts)
+      await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(entry)
+      });
+    } catch (e) {
+      console.error("Failed to save to global leaderboard", e);
+    }
+  } else {
+    const all = await loadLeaderboard();
+    all.push(entry);
+    try { localStorage.setItem(LB_KEY, JSON.stringify(all)); } catch (e) {}
+  }
 }
+
 function clearLeaderboard() {
   try { localStorage.removeItem(LB_KEY); } catch (e) {}
 }
@@ -1193,7 +1219,7 @@ function nextQuestion() {
 }
 
 /* ============ END SCREEN ============ */
-function finishQuiz() {
+async function finishQuiz() {
   const entry = {
     name: state.playerName,
     score: state.score,
@@ -1202,13 +1228,18 @@ function finishQuiz() {
     timeMs: Date.now() - state.startedAt,
     completedAt: new Date().toISOString()
   };
-  saveToLeaderboard(entry);
 
   els.quizScreen.classList.add('hide');
   els.endScreen.classList.remove('hide');
   els.endPlayerChip.textContent = state.playerName;
-  renderEnd(entry);
+  els.lbTable.innerHTML = `<div class="lb-empty">Syncing scores to global leaderboard...</div>`;
   window.scrollTo(0, 0);
+
+  // Use the global loader layout for instant feedback then await save
+  await saveToLeaderboard(entry);
+  
+  // Render handles both local and global fetching
+  renderEnd(entry);
 }
 
 function breakdownOf(answers) {
@@ -1257,8 +1288,15 @@ function heroCopy(pct) {
   return { label: "Tilt", title: `<em>Variance</em> happens.`, sub: "Time to sit out and review the fundamentals." };
 }
 
-function renderLeaderboard(yourEntry) {
-  const all = loadLeaderboard();
+async function renderLeaderboard(yourEntry) {
+  els.lbTable.innerHTML = `<div class="lb-empty">Fetching global scores...</div>`;
+  const all = await loadLeaderboard();
+  
+  // if global backend didn't return you (cache lag), append it manually to view locally fast
+  if (BACKEND_URL && !all.some(e => e.completedAt === yourEntry.completedAt)) {
+    all.push(yourEntry);
+  }
+
   if (all.length === 0) {
     els.lbTable.innerHTML = `<div class="lb-empty">No entries yet — you're first at the table.</div>`;
     return;
@@ -1345,7 +1383,11 @@ els.retakeBtn.addEventListener('click', () => {
 });
 
 els.clearBtn.addEventListener('click', () => {
-  if (confirm('Clear the leaderboard on this browser? This cannot be undone.')) {
+  if (BACKEND_URL) {
+    alert("Global leaderboard cannot be cleared from the frontend.");
+    return;
+  }
+  if (confirm('Clear the local leaderboard on this browser? This cannot be undone.')) {
     clearLeaderboard();
     els.lbTable.innerHTML = `<div class="lb-empty">Leaderboard cleared.</div>`;
   }
