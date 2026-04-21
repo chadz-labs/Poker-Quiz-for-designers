@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Poker for Designers — Refresher Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0E12;
+    --bg-2: #17181B;
+    --bg-3: #202125;
+    --panel: #202125;
+    --panel-2: #2B2C30;
+    --border: #414246;
+    --border-soft: #2B2C30;
+    --red-deep: #311011;
+    --red-mid: #691511;
+    --red: #D41F10;
+    --red-2: #C0180C;
+    --green: #0F5845;
+    --green-bright: #1a8a6c;
+    --blue: #0070C5;
+    --yellow: #E1B800;
+    --text: #F2F1ED;
+    --text-dim: #9A9A9F;
+    --text-faint: #6A6A6F;
+    --serif: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(212, 31, 16, 0.12), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(15, 88, 69, 0.10), transparent 60%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  .screen.hide { display: none !important; }
+
+  /* ========== TOP BAR ========== */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: rgba(13, 14, 18, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: center;
+    padding: 0 28px;
+    z-index: 50;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--serif); font-weight: 600; font-style: italic;
+    font-size: 17px; letter-spacing: -0.01em;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--red), var(--red-2));
+    display: grid; place-items: center;
+    color: white; font-family: var(--serif); font-weight: 900;
+    font-size: 16px; font-style: normal;
+    box-shadow: 0 4px 14px rgba(212, 31, 16, 0.35), inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+  .brand small {
+    font-family: var(--mono); font-style: normal; font-weight: 400;
+    font-size: 10px; color: var(--text-faint);
+    letter-spacing: 0.18em; text-transform: uppercase;
+    margin-left: 8px; padding-left: 12px;
+    border-left: 1px solid var(--border-soft);
+  }
+  .topbar-right {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 18px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .topbar-right .sep {
+    width: 1px; height: 14px; background: var(--border); display: inline-block;
+  }
+  .score-chip {
+    background: linear-gradient(180deg, rgba(225, 184, 0, 0.14), rgba(225, 184, 0, 0.04));
+    border: 1px solid rgba(225, 184, 0, 0.35);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: var(--yellow);
+    font-weight: 700; letter-spacing: 0.1em;
+  }
+  .player-chip {
+    color: var(--text);
+    font-family: var(--sans); text-transform: none; letter-spacing: 0;
+    font-size: 13px; font-weight: 500;
+  }
+  .player-chip::before {
+    content: "♠"; color: var(--red); margin-right: 6px; font-family: var(--serif);
+  }
+
+  /* ========== STAGE ========== */
+  .stage {
+    min-height: 100vh;
+    padding: 96px 28px 140px;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    position: relative;
+  }
+  .stage-inner {
+    width: 100%; max-width: 1080px;
+    padding: 20px 36px;
+    position: relative;
+  }
+  .suit-deco {
+    position: absolute;
+    font-family: var(--serif);
+    font-size: 180px; line-height: 1;
+    color: rgba(212, 31, 16, 0.05);
+    user-select: none; pointer-events: none;
+    font-weight: 900;
+  }
+  .suit-deco.tl { top: -20px; left: -10px; }
+  .suit-deco.br { bottom: -40px; right: -10px; transform: rotate(180deg); }
+
+  /* ========== QUESTION META ========== */
+  .q-meta {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 28px; flex-wrap: wrap;
+    opacity: 0; animation: rise 0.5s 0.05s ease-out forwards;
+  }
+  .q-number {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.22em; color: var(--text-faint); text-transform: uppercase;
+  }
+  .q-divider { width: 24px; height: 1px; background: var(--border); }
+  .q-section {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.22em; color: var(--red); text-transform: uppercase;
+  }
+  .q-points-badge {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim);
+  }
+  .q-difficulty { display: inline-flex; gap: 3px; }
+  .diff-pip {
+    width: 8px; height: 8px;
+    border: 1px solid var(--border);
+    border-radius: 1px;
+    transform: rotate(45deg);
+  }
+  .diff-pip.on {
+    background: var(--red); border-color: var(--red);
+    box-shadow: 0 0 6px rgba(212, 31, 16, 0.5);
+  }
+  .q-points-val { color: var(--yellow); font-weight: 700; letter-spacing: 0.08em; }
+
+  /* ========== QUESTION ========== */
+  .question {
+    font-family: var(--serif); font-weight: 600;
+    font-size: clamp(26px, 3.2vw, 40px);
+    line-height: 1.2; letter-spacing: -0.02em;
+    color: var(--text); margin-bottom: 28px;
+    opacity: 0; animation: rise 0.6s 0.15s ease-out forwards;
+  }
+  .question em { font-style: italic; color: var(--red); }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========== OPTIONS ========== */
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .option {
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex; align-items: flex-start; gap: 14px;
+    transition: all 0.2s ease;
+    position: relative; overflow: hidden;
+    cursor: pointer; text-align: left;
+    font-family: inherit; color: inherit;
+    width: 100%;
+    opacity: 0;
+    animation: pop 0.4s ease-out forwards;
+  }
+  .option:nth-child(1) { animation-delay: 0.25s; }
+  .option:nth-child(2) { animation-delay: 0.32s; }
+  .option:nth-child(3) { animation-delay: 0.39s; }
+  .option:nth-child(4) { animation-delay: 0.46s; }
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .option:hover:not(:disabled) {
+    border-color: var(--text-faint);
+    background: var(--panel-2);
+    transform: translateY(-1px);
+  }
+  .option:disabled { cursor: default; }
+  .option-letter {
+    font-family: var(--mono); font-weight: 700; font-size: 12px;
+    width: 26px; height: 26px;
+    border-radius: 5px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    display: grid; place-items: center;
+    color: var(--text-dim);
+    flex-shrink: 0; margin-top: 1px;
+    transition: all 0.2s ease;
+  }
+  .option-text {
+    font-size: 15px; line-height: 1.5;
+    color: var(--text); font-weight: 400;
+  }
+  .option.correct {
+    border-color: var(--green-bright);
+    background: linear-gradient(180deg, rgba(26, 138, 108, 0.22), rgba(15, 88, 69, 0.08));
+  }
+  .option.correct .option-letter {
+    background: var(--green-bright); border-color: var(--green-bright); color: white;
+  }
+  .option.correct::after {
+    content: "✓"; position: absolute; top: 50%; right: 18px;
+    transform: translateY(-50%); color: var(--green-bright);
+    font-size: 22px; font-weight: 700;
+  }
+  .option.wrong {
+    border-color: var(--red);
+    background: linear-gradient(180deg, rgba(212, 31, 16, 0.18), rgba(212, 31, 16, 0.04));
+  }
+  .option.wrong .option-letter {
+    background: var(--red); border-color: var(--red); color: white;
+  }
+  .option.wrong::after {
+    content: "✕"; position: absolute; top: 50%; right: 18px;
+    transform: translateY(-50%); color: var(--red);
+    font-size: 22px; font-weight: 700;
+  }
+  .option.faded { opacity: 0.38; }
+
+  /* ========== EXPLANATION ========== */
+  .explanation {
+    margin-top: 22px;
+    padding: 0 22px;
+    background: linear-gradient(180deg, rgba(225, 184, 0, 0.08), rgba(225, 184, 0, 0.02));
+    border: 0 solid rgba(225, 184, 0, 0.25);
+    border-left: 0 solid var(--yellow);
+    border-radius: 8px;
+    max-height: 0; overflow: hidden; opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.4s ease, margin 0.4s ease, border-width 0.2s ease;
+  }
+  .explanation.shown {
+    max-height: 400px; opacity: 1;
+    padding: 16px 22px;
+    border-width: 1px; border-left-width: 3px;
+    margin-top: 22px;
+  }
+  .exp-label {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .exp-label .verdict {
+    font-family: var(--sans); font-weight: 600;
+    letter-spacing: 0.05em; font-size: 11px;
+    padding: 2px 8px; border-radius: 4px;
+    text-transform: none;
+  }
+  .exp-label .verdict.correct { background: rgba(26, 138, 108, 0.2); color: #5ad4b0; }
+  .exp-label .verdict.wrong { background: rgba(212, 31, 16, 0.2); color: #ff6a5a; }
+  .exp-text {
+    font-family: var(--serif); font-style: italic;
+    font-size: 16px; line-height: 1.55;
+    color: var(--text); font-weight: 400;
+  }
+
+  /* ========== CONTROLS ========== */
+  .controls {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 100px;
+    background: linear-gradient(180deg, transparent, var(--bg) 40%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 28px; z-index: 50;
+    pointer-events: none;
+  }
+  .ctrl {
+    pointer-events: auto;
+    background: linear-gradient(180deg, var(--red), var(--red-2));
+    border: 1px solid var(--red-2);
+    color: white;
+    padding: 13px 26px; border-radius: 10px;
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 10px;
+    transition: all 0.2s ease;
+    box-shadow: 0 6px 20px rgba(212, 31, 16, 0.35);
+    opacity: 0; transform: translateY(8px);
+  }
+  .ctrl.visible {
+    opacity: 1; transform: translateY(0);
+  }
+  .ctrl:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(212, 31, 16, 0.5);
+  }
+  .kbd {
+    font-family: var(--mono); font-size: 10px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 3px 7px; border-radius: 4px;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.05em;
+  }
+
+  .progress {
+    position: fixed; bottom: 100px; left: 0; right: 0;
+    height: 2px;
+    background: var(--border-soft);
+    z-index: 49;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--red-mid), var(--red), var(--yellow));
+    transition: width 0.5s cubic-bezier(.2,.8,.2,1);
+    box-shadow: 0 0 8px rgba(212, 31, 16, 0.6);
+  }
+
+  /* ========== START / NAME SCREEN ========== */
+  .start-screen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 60% 50% at 50% 30%, rgba(212, 31, 16, 0.15), transparent 70%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    display: grid; place-items: center;
+    z-index: 100;
+    padding: 40px 20px;
+    overflow-y: auto;
+  }
+  .start-card {
+    text-align: center;
+    max-width: 560px;
+    width: 100%;
+  }
+  .start-suits {
+    font-family: var(--serif); font-size: 48px;
+    letter-spacing: 0.08em; margin-bottom: 20px; line-height: 1;
+  }
+  .start-suits span { display: inline-block; }
+  .start-suits span:nth-child(1) { color: #2B2C30; }
+  .start-suits span:nth-child(2) { color: var(--red); }
+  .start-suits span:nth-child(3) { color: #2B2C30; }
+  .start-suits span:nth-child(4) { color: var(--red); }
+  .start-eyebrow {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--text-faint); margin-bottom: 16px;
+  }
+  .start-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(42px, 6vw, 72px);
+    line-height: 0.98; letter-spacing: -0.035em;
+    margin-bottom: 10px;
+  }
+  .start-title em { font-style: italic; color: var(--red); }
+  .start-sub {
+    font-family: var(--serif); font-style: italic;
+    font-size: 17px; color: var(--text-dim);
+    margin-bottom: 36px; font-weight: 400;
+  }
+  .name-form { margin: 28px auto 20px; max-width: 420px; }
+  .name-label {
+    display: block;
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 10px; text-align: left;
+  }
+  .name-input {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-family: var(--serif); font-size: 22px; font-weight: 500;
+    color: var(--text); letter-spacing: -0.01em;
+    transition: all 0.2s ease;
+  }
+  .name-input::placeholder { color: var(--text-faint); font-style: italic; }
+  .name-input:focus {
+    outline: none;
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(212, 31, 16, 0.18);
+    background: var(--panel-2);
+  }
+  .start-rules {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 24px 0 28px;
+    padding: 16px;
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+  }
+  .rule-item { text-align: center; padding: 6px 4px; }
+  .rule-item + .rule-item { border-left: 1px solid var(--border-soft); }
+  .rule-count {
+    font-family: var(--serif); font-weight: 600;
+    font-size: 22px; color: var(--text);
+    letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px;
+  }
+  .rule-pts {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.15em; color: var(--yellow);
+    margin-bottom: 6px; text-transform: uppercase;
+  }
+  .rule-lbl {
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .start-cta {
+    background: linear-gradient(180deg, var(--red), var(--red-2));
+    border: 1px solid var(--red-2); color: white;
+    padding: 15px 34px; border-radius: 10px;
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(212, 31, 16, 0.4);
+    transition: all 0.2s ease;
+  }
+  .start-cta:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(212, 31, 16, 0.55);
+  }
+  .start-cta:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+  /* ========== END SCREEN ========== */
+  .end-screen {
+    min-height: 100vh;
+    padding: 100px 28px 80px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .end-inner { width: 100%; max-width: 760px; }
+  .end-hero { text-align: center; margin-bottom: 48px; }
+  .end-hero .start-suits { margin-bottom: 20px; font-size: 40px; }
+  .end-hero-label {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--text-faint); margin-bottom: 14px;
+  }
+  .end-hero-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(36px, 5vw, 60px);
+    line-height: 1; letter-spacing: -0.03em;
+    margin-bottom: 8px;
+  }
+  .end-hero-title em { font-style: italic; color: var(--red); }
+  .end-hero-sub {
+    font-family: var(--serif); font-style: italic;
+    font-size: 17px; color: var(--text-dim);
+    margin-bottom: 36px;
+  }
+  .score-card {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px 32px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 28px; align-items: center;
+    margin-bottom: 36px;
+    position: relative; overflow: hidden;
+  }
+  .score-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 50% 0%, rgba(225, 184, 0, 0.08), transparent);
+    pointer-events: none;
+  }
+  .score-num {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(64px, 9vw, 104px);
+    line-height: 1; letter-spacing: -0.04em;
+    color: var(--yellow);
+    text-align: center;
+  }
+  .score-num small {
+    display: block;
+    font-family: var(--mono); font-size: 13px; font-weight: 400;
+    color: var(--text-faint);
+    letter-spacing: 0.15em; margin-top: 8px;
+    text-transform: uppercase;
+  }
+  .score-divider { width: 1px; height: 110px; background: var(--border); }
+  .score-breakdown { display: flex; flex-direction: column; gap: 10px; }
+  .score-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    font-family: var(--mono); font-size: 12px; color: var(--text-dim);
+  }
+  .score-row-label {
+    display: flex; align-items: center; gap: 10px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+  }
+  .score-row-value {
+    font-family: var(--serif); font-weight: 500;
+    font-size: 15px; color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .score-row-value .pts { color: var(--yellow); }
+
+  .lb-section { margin-bottom: 32px; }
+  .lb-heading {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .lb-title {
+    font-family: var(--serif); font-weight: 600;
+    font-size: 24px; letter-spacing: -0.02em;
+  }
+  .lb-title em { font-style: italic; color: var(--red); }
+  .lb-sub {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .lb-table {
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .lb-row {
+    display: grid;
+    grid-template-columns: 48px 1fr auto 80px;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-soft);
+    transition: background 0.15s ease;
+  }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-row.head {
+    background: var(--bg-2);
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-faint);
+    padding: 10px 20px;
+  }
+  .lb-row.you {
+    background: linear-gradient(90deg, rgba(212, 31, 16, 0.1), transparent);
+    border-left: 3px solid var(--red);
+    padding-left: 17px;
+  }
+  .lb-rank {
+    font-family: var(--mono); font-weight: 700; font-size: 14px;
+    color: var(--text-dim);
+  }
+  .lb-row.rank-1 .lb-rank { font-size: 18px; }
+  .lb-name {
+    font-family: var(--serif); font-weight: 500;
+    font-size: 16px; letter-spacing: -0.01em;
+    color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .lb-name .you-tag {
+    margin-left: 8px; display: inline-block;
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--red); background: rgba(212, 31, 16, 0.15);
+    padding: 2px 7px; border-radius: 4px;
+    font-style: normal; font-weight: 500;
+    vertical-align: middle;
+  }
+  .lb-pct {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--text-faint); letter-spacing: 0.05em;
+  }
+  .lb-score {
+    font-family: var(--serif); font-weight: 600;
+    font-size: 18px; color: var(--yellow);
+    text-align: right; letter-spacing: -0.01em;
+  }
+  .lb-empty {
+    padding: 40px 20px; text-align: center;
+    color: var(--text-faint);
+    font-family: var(--serif); font-style: italic; font-size: 15px;
+  }
+  .end-actions {
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+  }
+  .end-btn {
+    padding: 12px 22px; border-radius: 10px;
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel); color: var(--text);
+  }
+  .end-btn:hover {
+    background: var(--panel-2);
+    border-color: var(--text-faint);
+    transform: translateY(-1px);
+  }
+  .end-btn.primary {
+    background: linear-gradient(180deg, var(--red), var(--red-2));
+    border-color: var(--red-2); color: white;
+    box-shadow: 0 6px 18px rgba(212, 31, 16, 0.35);
+  }
+  .end-btn.primary:hover { box-shadow: 0 10px 26px rgba(212, 31, 16, 0.5); }
+  .end-btn.danger-ghost {
+    color: var(--text-faint); font-size: 11px;
+    border-color: transparent; background: transparent;
+    padding: 10px 14px;
+  }
+  .end-btn.danger-ghost:hover {
+    color: var(--red); border-color: var(--border-soft);
+    background: var(--panel); transform: none;
+  }
+  .toast {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--panel-2);
+    border: 1px solid var(--green-bright);
+    color: var(--text);
+    padding: 12px 18px; border-radius: 10px;
+    font-family: var(--sans); font-size: 13px; font-weight: 500;
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ========== MOBILE ========== */
+  @media (max-width: 720px) {
+    .stage-inner { padding: 16px 12px; }
+    .options { grid-template-columns: 1fr; }
+    .topbar { padding: 0 16px; }
+    .topbar-right { gap: 10px; font-size: 10px; }
+    .topbar-right .player-chip { display: none; }
+    .topbar-right .sep { display: none; }
+    .brand small { display: none; }
+    .score-card { grid-template-columns: 1fr; gap: 20px; padding: 24px; }
+    .score-divider { width: 60%; height: 1px; justify-self: center; }
+    .lb-row { grid-template-columns: 32px 1fr 68px; gap: 10px; padding: 12px 14px; }
+    .lb-pct { display: none; }
+    .ctrl { padding: 11px 20px; font-size: 13px; }
+    .start-rules { grid-template-columns: 1fr; gap: 4px; }
+    .rule-item + .rule-item { border-left: none; border-top: 1px solid var(--border-soft); padding-top: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ START SCREEN ============ -->
+<div class="screen start-screen" id="startScreen">
+  <div class="start-card">
+    <div class="start-suits"><span>♠</span> <span>♥</span> <span>♦</span> <span>♣</span></div>
+    <div class="start-eyebrow">A refresher before Part 02</div>
+    <h1 class="start-title">Poker for <em>Designers</em></h1>
+    <p class="start-sub">The Quiz — show us what stuck.</p>
+
+    <div class="name-form">
+      <label class="name-label" for="nameInput">Your name</label>
+      <input type="text" id="nameInput" class="name-input"
+        placeholder="Enter your name" maxlength="28" autocomplete="off" spellcheck="false" />
+    </div>
+
+    <div class="start-rules">
+      <div class="rule-item">
+        <div class="rule-count">7</div>
+        <div class="rule-pts">1 pt each</div>
+        <div class="rule-lbl">Easy</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-count">6</div>
+        <div class="rule-pts">2 pts each</div>
+        <div class="rule-lbl">Medium</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-count">2</div>
+        <div class="rule-pts">3 pts each</div>
+        <div class="rule-lbl">Hard</div>
+      </div>
+    </div>
+
+    <button class="start-cta" id="startBtn" disabled>Deal me in →</button>
+  </div>
+</div>
+
+<!-- ============ QUIZ SCREEN ============ -->
+<div class="screen hide" id="quizScreen">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">P</div>
+      Poker for Designers
+      <small>Refresher · Pt. 01 → 02</small>
+    </div>
+    <div class="topbar-right">
+      <span class="player-chip" id="playerChip"></span>
+      <span class="sep"></span>
+      <span class="score-chip" id="scoreChip">0 PTS</span>
+      <span class="sep"></span>
+      <span id="counterPip">Q 01 / 15</span>
+    </div>
+  </div>
+
+  <main class="stage">
+    <div class="stage-inner" id="stageInner">
+      <div class="suit-deco tl">♠</div>
+      <div class="suit-deco br">♥</div>
+
+      <div class="q-meta">
+        <span class="q-number" id="qNumber">Question 01</span>
+        <span class="q-divider"></span>
+        <span class="q-section" id="qSection">—</span>
+        <span class="q-points-badge">
+          <span class="q-difficulty" id="qDifficulty"></span>
+          <span class="q-points-val" id="qPointsVal">1 pt</span>
+        </span>
+      </div>
+
+      <h2 class="question" id="qText"></h2>
+
+      <div class="options" id="qOptions"></div>
+
+      <div class="explanation" id="qExplanation">
+        <div class="exp-label">
+          <span>Why</span>
+          <span class="verdict" id="qVerdict"></span>
+        </div>
+        <div class="exp-text" id="qExpText"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="progress"><div class="progress-bar" id="progressBar" style="width: 0%"></div></div>
+
+  <div class="controls">
+    <button class="ctrl" id="nextBtn">
+      <span id="nextBtnLabel">Next question</span>
+      <span class="kbd">Space</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============ END / LEADERBOARD SCREEN ============ -->
+<div class="screen hide" id="endScreen">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">P</div>
+      Poker for Designers
+      <small>Results</small>
+    </div>
+    <div class="topbar-right">
+      <span class="player-chip" id="endPlayerChip"></span>
+    </div>
+  </div>
+
+  <main class="end-screen">
+    <div class="end-inner">
+      <div class="end-hero">
+        <div class="start-suits"><span>♠</span> <span>♥</span> <span>♦</span> <span>♣</span></div>
+        <div class="end-hero-label" id="endHeroLabel">Refresher complete</div>
+        <h1 class="end-hero-title" id="endTitle">Nice <em>hand</em>.</h1>
+        <p class="end-hero-sub" id="endSub">Here's how you played it.</p>
+      </div>
+
+      <div class="score-card">
+        <div class="score-num">
+          <span id="scoreFinal">0</span><span style="color: var(--text-faint); font-size: 0.5em;"> / 25</span>
+          <small id="scorePct">0%</small>
+        </div>
+        <div class="score-divider"></div>
+        <div class="score-breakdown">
+          <div class="score-row">
+            <span class="score-row-label"><span style="color: var(--text-dim);">Easy</span></span>
+            <span class="score-row-value"><span id="brEasy">0/7</span> · <span class="pts" id="brEasyPts">0 pts</span></span>
+          </div>
+          <div class="score-row">
+            <span class="score-row-label"><span style="color: var(--text-dim);">Medium</span></span>
+            <span class="score-row-value"><span id="brMed">0/6</span> · <span class="pts" id="brMedPts">0 pts</span></span>
+          </div>
+          <div class="score-row">
+            <span class="score-row-label"><span style="color: var(--text-dim);">Hard</span></span>
+            <span class="score-row-value"><span id="brHard">0/2</span> · <span class="pts" id="brHardPts">0 pts</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lb-section">
+        <div class="lb-heading">
+          <h2 class="lb-title">The <em>Leaderboard</em></h2>
+          <span class="lb-sub">Top scores on this browser</span>
+        </div>
+        <div class="lb-table" id="lbTable"></div>
+      </div>
+
+      <div class="end-actions">
+        <button class="end-btn primary" id="copyBtn">📋 Copy my result</button>
+        <button class="end-btn" id="retakeBtn">↻ Run it back</button>
+        <button class="end-btn danger-ghost" id="clearBtn">Clear leaderboard</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+/* ============================================================
+   QUESTIONS (15 total — 7 easy + 6 medium + 2 hard = 25 pts max)
+   ============================================================ */
+const QUESTIONS = [
+  // TIER 1 — EASY (1 pt each)
+  {
+    section: "Table Anatomy", difficulty: 1,
+    q: "What are <em>hole cards</em>?",
+    options: [
+      "The cards discarded from the deck before each hand begins",
+      "The community cards dealt face-up in the center of the table",
+      "A player's private cards, visible only to them",
+      "The 'burn cards' discarded by the dealer before each community card is dealt"
+    ],
+    correct: 2,
+    explanation: "Hole cards are your private cards — dealt face-down and visible only to you. NLH deals 2, PLO4 deals 4, PLO5 deals 5, PLO6 deals 6. Burn cards (option D) are real, but they're the cards discarded before each street — not hole cards."
+  },
+  {
+    section: "Table Anatomy", difficulty: 1,
+    q: "What does the <em>Pot</em> on a poker table represent?",
+    options: [
+      "Each player's remaining chip stack, shown in the center",
+      "The total chips wagered in the current hand, awarded to the winner",
+      "The rake that the platform has collected so far this session",
+      "The minimum buy-in required to join the table"
+    ],
+    correct: 1,
+    explanation: "The Pot is the total of all bets placed in the current hand. The winner of the hand takes it — minus any rake the platform collects. It must update in real-time as bets are placed."
+  },
+  {
+    section: "Table Anatomy", difficulty: 1,
+    q: "What does the <em>Dealer Button</em> (the \"D\" marker) indicate on the table?",
+    options: [
+      "The seat of the player who has been dealt the strongest hand",
+      "The current dealer position — it rotates clockwise each hand to ensure fairness",
+      "The seat of the player currently winning the most chips",
+      "The seat reserved for the most experienced player"
+    ],
+    correct: 1,
+    explanation: "The button marks the dealer position and rotates one seat clockwise every hand. It's the reference anchor for the entire table — SB, BB, UTG, and every other position is defined relative to it."
+  },
+  {
+    section: "Table Positions", difficulty: 1,
+    q: "The <em>Small Blind</em> is posted by the player sitting…",
+    options: [
+      "Immediately to the left of the dealer button",
+      "Immediately to the right of the dealer button",
+      "Two seats to the left of the dealer button",
+      "In the dealer button seat itself"
+    ],
+    correct: 0,
+    explanation: "SB sits directly left of the button and posts half the big blind. BB sits two seats to the left (which is why option C is a trap — that's the BB, not the SB). Both are forced bets posted before any cards are dealt."
+  },
+  {
+    section: "Actions", difficulty: 1,
+    q: "A player is allowed to <em>Check</em> only when…",
+    options: [
+      "It is the first betting round of the hand",
+      "There is no open bet on the current street",
+      "They are sitting in the Big Blind",
+      "They have already called at least once in the hand"
+    ],
+    correct: 1,
+    explanation: "Check = pass the action without committing chips, but only when there's no bet to respond to. If a bet is open, your only options are Call, Raise, or Fold."
+  },
+  {
+    section: "Hand Rankings", difficulty: 1,
+    q: "A <em>Royal Flush</em> — the strongest possible hand — is made of which exact cards?",
+    options: [
+      "Any five sequential cards of the same suit",
+      "Five face cards of the same suit",
+      "A, K, Q, J, 10 — all of the same suit",
+      "A, 2, 3, 4, 5 — all of the same suit"
+    ],
+    correct: 2,
+    explanation: "A Royal Flush is A-K-Q-J-10 all of the same suit. It's the #1 ranked hand — an unbeatable straight flush at the top of the deck. Any five sequential same-suit cards is a Straight Flush (#2), not a Royal."
+  },
+  {
+    section: "Game Variants", difficulty: 1,
+    q: "<em>Short Deck (6+)</em> is played with which deck?",
+    options: [
+      "A standard 52-card deck with two jokers added",
+      "A 36-card deck with 2s, 3s, 4s, and 5s removed",
+      "A 40-card deck with only 2s through 4s removed",
+      "A 32-card deck with all cards below 7 removed"
+    ],
+    correct: 1,
+    explanation: "Short Deck uses a 36-card deck — all 2s, 3s, 4s, and 5s are removed. Fewer low cards change the math: flushes are harder to make, which is why Flush beats Full House in this variant."
+  },
+
+  // TIER 2 — MEDIUM (2 pts each)
+  {
+    section: "Hand Rankings", difficulty: 2,
+    q: "Rank these from <em>strongest to weakest</em> (standard rankings): Flush, Full House, Straight, Four of a Kind.",
+    options: [
+      "Four of a Kind → Flush → Full House → Straight",
+      "Four of a Kind → Full House → Flush → Straight",
+      "Full House → Four of a Kind → Flush → Straight",
+      "Four of a Kind → Full House → Straight → Flush"
+    ],
+    correct: 1,
+    explanation: "Four of a Kind (#3) → Full House (#4) → Flush (#5) → Straight (#6). Note: Short Deck flips Flush and Full House — but in every standard variant, Full House beats Flush."
+  },
+  {
+    section: "Game Variants", difficulty: 2,
+    q: "In any PLO variant (PLO4, PLO5, PLO6), how must you build your final 5-card hand?",
+    options: [
+      "Use any 5 cards from your hole cards and the board",
+      "Use at least 2 hole cards and any 3 or more community cards",
+      "Use exactly 2 of your hole cards and exactly 3 community cards",
+      "Use exactly 3 of your hole cards and exactly 2 community cards"
+    ],
+    correct: 2,
+    explanation: "Exactly 2 from hand + exactly 3 from board — regardless of whether you hold 4, 5, or 6 hole cards. This is the rule that trips up NLH players moving into Omaha."
+  },
+  {
+    section: "Blinds & Ante", difficulty: 2,
+    q: "How does an <em>ante</em> differ from a blind?",
+    options: [
+      "An ante is optional each hand; a blind is mandatory",
+      "An ante is posted by all players (or by the BB on behalf of the table in modern formats); blinds are posted only by SB and BB",
+      "An ante is used only in cash games; blinds are used only in tournaments",
+      "An ante replaces the big blind whenever it is active"
+    ],
+    correct: 1,
+    explanation: "Blinds come from two specific seats (SB and BB). Antes come from every seat — or in the Big Blind Ante format, just the BB on behalf of the whole table. Antes inflate the starting pot."
+  },
+  {
+    section: "Table Positions", difficulty: 2,
+    q: "Which seat acts immediately <em>before</em> the Button on every post-flop street?",
+    options: ["Small Blind", "Under the Gun", "Cutoff", "Big Blind"],
+    correct: 2,
+    explanation: "Post-flop action order: SB → BB → UTG → MP → CO → BTN. The Cutoff sits directly before the Button — the second-best seat at the table. A CO who raises pre-flop can often fold out the BTN and 'steal' late-position advantage for the rest of the hand."
+  },
+  {
+    section: "Hand Flow", difficulty: 2,
+    q: "<em>Pre-flop</em>, who acts first?",
+    options: [
+      "Small Blind",
+      "Big Blind",
+      "Under the Gun (the player directly left of the Big Blind)",
+      "The Button"
+    ],
+    correct: 2,
+    explanation: "Pre-flop: action starts with UTG — the seat directly left of BB — and moves clockwise. SB and BB act last because they already have money in. BB even gets the option to raise if nobody else has."
+  },
+  {
+    section: "Hand Flow", difficulty: 2,
+    q: "On every <em>post-flop</em> street (Flop, Turn, River), who acts last?",
+    options: ["Under the Gun", "The Big Blind", "The Small Blind", "The Button"],
+    correct: 3,
+    explanation: "Post-flop the order resets: SB acts first, BTN acts last. Acting last every street = seeing everyone's decisions before you act = the single biggest strategic edge in poker."
+  },
+
+  // TIER 3 — HARD (3 pts each)
+  {
+    section: "Game Variants", difficulty: 3,
+    q: "In <em>Pot-Limit Omaha</em>, what is the maximum amount a player can bet or raise on any single action?",
+    options: [
+      "Any amount, up to the player's entire chip stack",
+      "The current size of the pot",
+      "Twice the size of the previous bet",
+      "A fixed limit set by the table stakes"
+    ],
+    correct: 1,
+    explanation: "\"Pot-Limit\" means the maximum bet at any moment is capped at the current pot size. This is the core distinction from No-Limit Hold'em, where you can shove your entire stack any time. It's why PLO pots escalate in controlled jumps rather than explosive all-ins."
+  },
+  {
+    section: "Hand Flow", difficulty: 3,
+    q: "Pre-flop, if nobody has raised, which seat has the option to <em>close the action</em> by either checking or raising?",
+    options: [
+      "Under the Gun — the first to act",
+      "The Button — last to act post-flop",
+      "The Small Blind — already half invested",
+      "The Big Blind — already fully invested"
+    ],
+    correct: 3,
+    explanation: "Pre-flop, the BB acts LAST — a privilege they earn because they already put in a full big blind. If nobody has raised, BB can check (a 'walk') or raise even though no one else did. Post-flop this reverses completely: BTN is last, BB acts second."
+  }
+];
+
+const POINTS = { 1: 1, 2: 2, 3: 3 };
+const MAX_POSSIBLE = QUESTIONS.reduce((s, q) => s + POINTS[q.difficulty], 0);
+const LB_KEY = "pokerQuizLeaderboard_v1";
+
+const state = {
+  playerName: "",
+  idx: 0,
+  answered: false,
+  answers: [],
+  score: 0,
+  startedAt: null
+};
+
+const $ = (id) => document.getElementById(id);
+const els = {
+  startScreen: $('startScreen'), quizScreen: $('quizScreen'), endScreen: $('endScreen'),
+  nameInput: $('nameInput'), startBtn: $('startBtn'),
+  playerChip: $('playerChip'), scoreChip: $('scoreChip'), counterPip: $('counterPip'),
+  qNumber: $('qNumber'), qSection: $('qSection'), qDifficulty: $('qDifficulty'), qPointsVal: $('qPointsVal'),
+  qText: $('qText'), qOptions: $('qOptions'),
+  qExplanation: $('qExplanation'), qExpText: $('qExpText'), qVerdict: $('qVerdict'),
+  progressBar: $('progressBar'),
+  nextBtn: $('nextBtn'), nextBtnLabel: $('nextBtnLabel'),
+  stageInner: $('stageInner'),
+  endPlayerChip: $('endPlayerChip'),
+  endHeroLabel: $('endHeroLabel'), endTitle: $('endTitle'), endSub: $('endSub'),
+  scoreFinal: $('scoreFinal'), scorePct: $('scorePct'),
+  brEasy: $('brEasy'), brEasyPts: $('brEasyPts'),
+  brMed: $('brMed'), brMedPts: $('brMedPts'),
+  brHard: $('brHard'), brHardPts: $('brHardPts'),
+  lbTable: $('lbTable'),
+  copyBtn: $('copyBtn'), retakeBtn: $('retakeBtn'), clearBtn: $('clearBtn'),
+  toast: $('toast')
+};
+
+const pad = (n) => String(n).padStart(2, '0');
+
+/* ============ LEADERBOARD STORAGE ============ */
+function loadLeaderboard() {
+  try {
+    const raw = localStorage.getItem(LB_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) { return []; }
+}
+function saveToLeaderboard(entry) {
+  const all = loadLeaderboard();
+  all.push(entry);
+  try { localStorage.setItem(LB_KEY, JSON.stringify(all)); } catch (e) {}
+  return all;
+}
+function clearLeaderboard() {
+  try { localStorage.removeItem(LB_KEY); } catch (e) {}
+}
+
+/* ============ NAME SCREEN ============ */
+els.nameInput.addEventListener('input', () => {
+  els.startBtn.disabled = els.nameInput.value.trim().length < 2;
+});
+els.nameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !els.startBtn.disabled) {
+    e.preventDefault();
+    startQuiz();
+  }
+});
+els.startBtn.addEventListener('click', startQuiz);
+
+function startQuiz() {
+  const name = els.nameInput.value.trim();
+  if (name.length < 2) return;
+  state.playerName = name;
+  state.idx = 0;
+  state.answered = false;
+  state.answers = [];
+  state.score = 0;
+  state.startedAt = Date.now();
+
+  els.playerChip.textContent = name;
+  els.startScreen.classList.add('hide');
+  els.endScreen.classList.add('hide');
+  els.quizScreen.classList.remove('hide');
+  render();
+  window.scrollTo(0, 0);
+}
+
+/* ============ RENDER ============ */
+function render() {
+  const q = QUESTIONS[state.idx];
+  const pts = POINTS[q.difficulty];
+
+  els.qNumber.textContent = `Question ${pad(state.idx + 1)}`;
+  els.qSection.textContent = q.section;
+  els.qPointsVal.textContent = `${pts} pt${pts > 1 ? 's' : ''}`;
+
+  els.qDifficulty.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const pip = document.createElement('span');
+    pip.className = 'diff-pip' + (i < q.difficulty ? ' on' : '');
+    els.qDifficulty.appendChild(pip);
+  }
+
+  els.stageInner.querySelectorAll('.q-meta, .question').forEach(el => {
+    el.style.animation = 'none'; void el.offsetHeight; el.style.animation = '';
+  });
+
+  els.qText.innerHTML = q.q;
+
+  els.qOptions.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.dataset.idx = i;
+    btn.innerHTML = `
+      <span class="option-letter">${String.fromCharCode(65 + i)}</span>
+      <span class="option-text">${opt}</span>
+    `;
+    btn.addEventListener('click', () => selectAnswer(i));
+    els.qOptions.appendChild(btn);
+  });
+
+  els.qExplanation.classList.remove('shown');
+  els.nextBtn.classList.remove('visible');
+  els.nextBtnLabel.textContent = (state.idx === QUESTIONS.length - 1) ? 'See results' : 'Next question';
+
+  state.answered = false;
+  updateChrome();
+}
+
+function updateChrome() {
+  els.scoreChip.textContent = `${state.score} PTS`;
+  els.counterPip.textContent = `Q ${pad(state.idx + 1)} / ${pad(QUESTIONS.length)}`;
+  const pct = ((state.idx + (state.answered ? 1 : 0)) / QUESTIONS.length) * 100;
+  els.progressBar.style.width = pct + '%';
+}
+
+function selectAnswer(chosenIdx) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const q = QUESTIONS[state.idx];
+  const isCorrect = chosenIdx === q.correct;
+  const pts = isCorrect ? POINTS[q.difficulty] : 0;
+  state.score += pts;
+  state.answers.push({
+    chosen: chosenIdx, correct: isCorrect,
+    points: pts, difficulty: q.difficulty
+  });
+
+  els.qOptions.querySelectorAll('.option').forEach((o, i) => {
+    o.disabled = true;
+    if (i === q.correct) o.classList.add('correct');
+    else if (i === chosenIdx) o.classList.add('wrong');
+    else o.classList.add('faded');
+  });
+
+  els.qVerdict.className = 'verdict ' + (isCorrect ? 'correct' : 'wrong');
+  els.qVerdict.textContent = isCorrect ? `+${pts} pt${pts > 1 ? 's' : ''}` : 'Missed — 0 pts';
+  els.qExpText.textContent = q.explanation;
+  els.qExplanation.classList.add('shown');
+
+  els.nextBtn.classList.add('visible');
+  updateChrome();
+}
+
+els.nextBtn.addEventListener('click', nextQuestion);
+
+function nextQuestion() {
+  if (!state.answered) return;
+  if (state.idx < QUESTIONS.length - 1) {
+    state.idx++;
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    finishQuiz();
+  }
+}
+
+/* ============ END SCREEN ============ */
+function finishQuiz() {
+  const entry = {
+    name: state.playerName,
+    score: state.score,
+    max: MAX_POSSIBLE,
+    breakdown: breakdownOf(state.answers),
+    timeMs: Date.now() - state.startedAt,
+    completedAt: new Date().toISOString()
+  };
+  saveToLeaderboard(entry);
+
+  els.quizScreen.classList.add('hide');
+  els.endScreen.classList.remove('hide');
+  els.endPlayerChip.textContent = state.playerName;
+  renderEnd(entry);
+  window.scrollTo(0, 0);
+}
+
+function breakdownOf(answers) {
+  const totals = { 1: { got: 0, max: 0 }, 2: { got: 0, max: 0 }, 3: { got: 0, max: 0 } };
+  QUESTIONS.forEach(q => { totals[q.difficulty].max++; });
+  answers.forEach(a => { if (a.correct) totals[a.difficulty].got++; });
+  return totals;
+}
+
+function renderEnd(entry) {
+  const pct = Math.round((entry.score / entry.max) * 100);
+  els.scoreFinal.textContent = entry.score;
+  els.scorePct.textContent = pct + '% · ' + verdictLabel(pct);
+
+  const hero = heroCopy(pct);
+  els.endHeroLabel.textContent = hero.label;
+  els.endTitle.innerHTML = hero.title;
+  els.endSub.textContent = hero.sub;
+
+  const b = entry.breakdown;
+  els.brEasy.textContent = `${b[1].got}/${b[1].max}`;
+  els.brEasyPts.textContent = `${b[1].got * 1} pts`;
+  els.brMed.textContent = `${b[2].got}/${b[2].max}`;
+  els.brMedPts.textContent = `${b[2].got * 2} pts`;
+  els.brHard.textContent = `${b[3].got}/${b[3].max}`;
+  els.brHardPts.textContent = `${b[3].got * 3} pts`;
+
+  renderLeaderboard(entry);
+}
+
+function verdictLabel(pct) {
+  if (pct === 100) return "Perfect";
+  if (pct >= 90) return "Crushed it";
+  if (pct >= 75) return "Strong";
+  if (pct >= 60) return "Solid";
+  if (pct >= 40) return "On the bubble";
+  return "Needs a rebuy";
+}
+
+function heroCopy(pct) {
+  if (pct === 100) return { label: "Scoop", title: `The <em>nuts</em>. Perfect run.`, sub: "Every street, every answer. Unbeatable." };
+  if (pct >= 90)  return { label: "Big Hand", title: `Nice <em>hand</em>.`, sub: "Read the board well — clean, confident play." };
+  if (pct >= 75)  return { label: "Decent Run", title: `You <em>played it</em> well.`, sub: "A few misreads, but you ended up ahead." };
+  if (pct >= 60)  return { label: "Break-Even", title: `Held your <em>stack</em>.`, sub: "Middle of the pack — worth a refresher before Part 02." };
+  if (pct >= 40)  return { label: "Cooler", title: `Rough <em>session</em>.`, sub: "Some gaps to patch — revisit the basics before Part 02." };
+  return { label: "Tilt", title: `<em>Variance</em> happens.`, sub: "Time to sit out and review the fundamentals." };
+}
+
+function renderLeaderboard(yourEntry) {
+  const all = loadLeaderboard();
+  if (all.length === 0) {
+    els.lbTable.innerHTML = `<div class="lb-empty">No entries yet — you're first at the table.</div>`;
+    return;
+  }
+
+  const sorted = [...all].sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return new Date(a.completedAt) - new Date(b.completedAt);
+  });
+
+  const yourKey = yourEntry.completedAt;
+  const top = sorted.slice(0, 10);
+  const youInTop = top.some(e => e.completedAt === yourKey);
+  const yourRank = sorted.findIndex(e => e.completedAt === yourKey) + 1;
+
+  let html = `
+    <div class="lb-row head">
+      <span>Rank</span>
+      <span>Player</span>
+      <span>%</span>
+      <span style="text-align: right;">Score</span>
+    </div>
+  `;
+
+  top.forEach((e, i) => {
+    html += renderLbRow(e, i + 1, e.completedAt === yourKey);
+  });
+
+  if (!youInTop && yourRank > 0) {
+    html += `<div class="lb-row head" style="font-size: 9px; opacity: 0.5;"><span>…</span><span></span><span></span><span></span></div>`;
+    html += renderLbRow(yourEntry, yourRank, true);
+  }
+
+  els.lbTable.innerHTML = html;
+}
+
+function renderLbRow(e, rank, isYou) {
+  const pct = Math.round((e.score / e.max) * 100);
+  const rankStr = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : String(rank).padStart(2, '0');
+  const classes = ['lb-row'];
+  if (isYou) classes.push('you');
+  if (rank <= 3) classes.push(`rank-${rank}`);
+  return `
+    <div class="${classes.join(' ')}">
+      <span class="lb-rank">${rankStr}</span>
+      <span class="lb-name">${escapeHtml(e.name)}${isYou ? '<span class="you-tag">You</span>' : ''}</span>
+      <span class="lb-pct">${pct}%</span>
+      <span class="lb-score">${e.score}<span style="color: var(--text-faint); font-size: 0.65em; margin-left: 2px;">/${e.max}</span></span>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============ END-SCREEN ACTIONS ============ */
+els.copyBtn.addEventListener('click', async () => {
+  const b = breakdownOf(state.answers);
+  const pct = Math.round((state.score / MAX_POSSIBLE) * 100);
+  const text = `🃏 Poker for Designers — Quiz Refresher
+${state.playerName} scored ${state.score} / ${MAX_POSSIBLE} (${pct}%)
+• Easy: ${b[1].got}/${b[1].max}  • Medium: ${b[2].got}/${b[2].max}  • Hard: ${b[3].got}/${b[3].max}`;
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Copied — drop it in the workshop chat');
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('Copied — drop it in the workshop chat'); } catch (_) {}
+    document.body.removeChild(ta);
+  }
+});
+
+els.retakeBtn.addEventListener('click', () => {
+  els.endScreen.classList.add('hide');
+  els.startScreen.classList.remove('hide');
+  els.nameInput.value = state.playerName;
+  els.startBtn.disabled = false;
+  els.nameInput.focus();
+  els.nameInput.select();
+});
+
+els.clearBtn.addEventListener('click', () => {
+  if (confirm('Clear the leaderboard on this browser? This cannot be undone.')) {
+    clearLeaderboard();
+    els.lbTable.innerHTML = `<div class="lb-empty">Leaderboard cleared.</div>`;
+  }
+});
+
+function showToast(msg) {
+  els.toast.textContent = '✓  ' + msg;
+  els.toast.classList.add('show');
+  setTimeout(() => els.toast.classList.remove('show'), 2200);
+}
+
+/* ============ KEYBOARD ============ */
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  if (!els.quizScreen.classList.contains('hide')) {
+    if (!state.answered) {
+      const key = e.key.toUpperCase();
+      const letterMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+      const numMap = { '1': 0, '2': 1, '3': 2, '4': 3 };
+      const q = QUESTIONS[state.idx];
+      if (letterMap[key] !== undefined && letterMap[key] < q.options.length) {
+        e.preventDefault();
+        selectAnswer(letterMap[key]);
+      } else if (numMap[key] !== undefined && numMap[key] < q.options.length) {
+        e.preventDefault();
+        selectAnswer(numMap[key]);
+      }
+    } else {
+      if (e.code === 'Space' || e.key === 'Enter') {
+        e.preventDefault();
+        nextQuestion();
+      }
+    }
+  }
+});
+
+els.nameInput.focus();
+</script>
+</body>
+</html>
