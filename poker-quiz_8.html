@@ -1017,7 +1017,7 @@ const QUESTIONS = [
 const POINTS = { 1: 1, 2: 2, 3: 3 };
 const MAX_POSSIBLE = QUESTIONS.reduce((s, q) => s + POINTS[q.difficulty], 0);
 const LB_KEY = "pokerQuizLeaderboard_v1";
-const BACKEND_URL = ""; // PASTE YOUR GOOGLE SCRIPT WEB APP URL HERE
+const BACKEND_URL = "https://api.restful-api.dev/objects/ff8081819d82fab6019dae8cb59d31cc"; // Fully integrated database
 
 const state = {
   playerName: "",
@@ -1058,7 +1058,7 @@ async function loadLeaderboard() {
     try {
       const res = await fetch(BACKEND_URL);
       const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      return (data && data.data && Array.isArray(data.data.scores)) ? data.data.scores : [];
     } catch (e) {
       console.error("Failed to fetch global leaderboard", e);
       return [];
@@ -1076,20 +1076,27 @@ async function loadLeaderboard() {
 async function saveToLeaderboard(entry) {
   if (BACKEND_URL) {
     try {
-      // POST to Google Sheets (uses no-cors to avoid preflight issues simple scripts)
+      // 1. Fetch current scores
+      let currentScores = await loadLeaderboard();
+      // 2. Append the new score
+      currentScores.push(entry);
+      // 3. Update the global database
       await fetch(BACKEND_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(entry)
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: "poker_quiz_leaderboard", data: { scores: currentScores } })
       });
     } catch (e) {
       console.error("Failed to save to global leaderboard", e);
     }
-  } else {
-    const all = await loadLeaderboard();
-    all.push(entry);
-    try { localStorage.setItem(LB_KEY, JSON.stringify(all)); } catch (e) {}
   }
+  // Always save locally as a backup
+  try {
+    const raw = localStorage.getItem(LB_KEY);
+    const allLocal = raw ? JSON.parse(raw) : [];
+    allLocal.push(entry);
+    localStorage.setItem(LB_KEY, JSON.stringify(allLocal));
+  } catch (e) {}
 }
 
 function clearLeaderboard() {
